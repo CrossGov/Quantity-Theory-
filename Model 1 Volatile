@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: MIT
+// CrossGovDao Token (CGD) Smart Contract
+
+pragma solidity ^0.8.0;
+
+contract CrossGovDaoToken {
+    string public name = "CrossGovDao Token";
+    string public symbol = "CGD";
+    uint256 public decimals = 18;
+    uint256 public totalSupply = 2118300000 * 10**decimals;
+    uint256 public realValueSupply = 2613700000;
+    uint256 public moneyVelocity = 1223;
+    uint256 public priceLevel;
+
+    address public owner;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    constructor() {
+        owner = msg.sender;
+        balanceOf[owner] = totalSupply;
+    }
+
+    function calculatePriceLevel() public view returns (uint256) {
+        return (realValueSupply * moneyVelocity) / totalSupply;
+    }
+
+    function issueTokens(uint256 amount) public {
+        require(msg.sender == owner, "Only the owner can issue tokens.");
+        totalSupply += amount;
+        balanceOf[owner] += amount;
+    }
+
+    function burnTokens(uint256 amount) public {
+        require(msg.sender == owner, "Only the owner can burn tokens.");
+        require(totalSupply - amount >= realValueSupply, "Cannot burn tokens below the real value supply.");
+        totalSupply -= amount;
+        balanceOf[owner] -= amount;
+    }
+
+    function transfer(address to, uint256 value) public returns (bool) {
+        require(to != address(0), "Cannot transfer to the zero address.");
+        require(value <= balanceOf[msg.sender], "Insufficient balance.");
+        balanceOf[msg.sender] -= value;
+        balanceOf[to] += value;
+        emit Transfer(msg.sender, to, value);
+        return true;
+    }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        require(spender != address(0), "Cannot approve the zero address.");
+        allowance[msg.sender][spender] = value;
+        emit Approval(msg.sender, spender, value);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        require(to != address(0), "Cannot transfer to the zero address.");
+        require(value <= balanceOf[from], "Insufficient balance.");
+        require(value <= allowance[from][msg.sender], "Insufficient allowance.");
+        balanceOf[from] -= value;
+        balanceOf[to] += value;
+        allowance[from][msg.sender] -= value;
+        emit Transfer(from, to, value);
+        return true;
+    }
+
+    function updateRealValueSupply(uint256 newSupply) public {
+        require(msg.sender == owner, "Only the owner can update the real value supply.");
+        if (newSupply > realValueSupply) {
+            uint256 increasePercent = ((newSupply - realValueSupply) * 100) / realValueSupply;
+            uint256 newTotalSupply = (totalSupply * (100 + increasePercent)) / 100;
+            require(newTotalSupply <= totalSupply + (totalSupply * 10) / 100, "Cannot increase supply by more than 10%.");
+            totalSupply = newTotalSupply;
+            balanceOf[owner] += (newTotalSupply - totalSupply);
+            priceLevel = calculatePriceLevel();
+            uint256 newPriceLevel = (priceLevel * ((100 - increasePercent)) * 100) / 100;
+uint256 priceChangePercent = ((priceLevel - newPriceLevel) * 100) / priceLevel;
+balanceOf[owner] = (balanceOf[owner] * (100 - priceChangePercent)) / 100;
+} else if (newSupply < realValueSupply) {
+uint256 decreasePercent = ((realValueSupply - newSupply) * 100) / realValueSupply;
+uint256 newTotalSupply = (totalSupply * (100 - decreasePercent)) / 100;
+require(newTotalSupply >= totalSupply - (totalSupply * 10) / 100, "Cannot decrease supply by more than 10%.");
+totalSupply = newTotalSupply;
+balanceOf[owner] -= (totalSupply - newTotalSupply);
+priceLevel = calculatePriceLevel();
+uint256 newPriceLevel = (priceLevel * (100 + decreasePercent)) / 100;
+uint256 priceChangePercent = ((newPriceLevel - priceLevel) * 100) / priceLevel;
+balanceOf[owner] = (balanceOf[owner] * (100 + priceChangePercent)) / 100;
+}
+realValueSupply = newSupply;
+}
+
+function updateMoneyVelocity(uint256 newVelocity) public {
+    require(msg.sender == owner, "Only the owner can update the money velocity.");
+    if (newVelocity > moneyVelocity) {
+        uint256 increasePercent = ((newVelocity - moneyVelocity) * 100) / moneyVelocity;
+        uint256 priceChangePercent = (priceLevel * increasePercent) / 100;
+        balanceOf[owner] = (balanceOf[owner] * (100 - priceChangePercent)) / 100;
+    } else if (newVelocity < moneyVelocity) {
+        uint256 decreasePercent = ((moneyVelocity - newVelocity) * 100) / moneyVelocity;
+        uint256 priceChangePercent = ((priceLevel * decreasePercent) / 100);
+        balanceOf[owner] = (balanceOf[owner] * (100 + priceChangePercent)) / 100;
+    }
+    moneyVelocity = newVelocity;
+}
+}
