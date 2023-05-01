@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
-// CrossGovDao Token (CGD) Smart Contract
+// JensOParsson (JOP) Smart Contract
 
 pragma solidity ^0.8.0;
 
-contract CrossGovDaoToken {
-    string public name = "CrossGovDao Token";
-    string public symbol = "CGD";
+contract JensOParsson {
+    string public name = "Jens O Parsson";
+    string public symbol = "JOP";
     uint256 public decimals = 18;
-    uint256 public totalSupply = 2118300000 * 10**decimals;
-    uint256 public realValueSupply = 2613700000;
+    uint256 public totalSupply = 21183;
+    uint256 public realValueSupply = 26137;
     uint256 public moneyVelocity = 1223;
     uint256 public priceLevel;
 
@@ -26,7 +26,7 @@ contract CrossGovDaoToken {
     }
 
     function calculatePriceLevel() public view returns (uint256) {
-        return (realValueSupply * moneyVelocity) / totalSupply;
+        return (totalSupply * moneyVelocity) / realValueSupply;
     }
 
     function issueTokens(uint256 amount) public {
@@ -36,11 +36,10 @@ contract CrossGovDaoToken {
     }
 
     function burnTokens(uint256 amount) public {
-        require(msg.sender == owner, "Only the owner can burn tokens.");
-        require(totalSupply - amount >= realValueSupply, "Cannot burn tokens below the real value supply.");
-        totalSupply -= amount;
-        balanceOf[owner] -= amount;
-    }
+    require(msg.sender == owner, "Only the owner can burn tokens.");
+    balanceOf[owner] -= amount;
+    totalSupply -= amount; // subtract the burned tokens from the total supply
+}
 
     function transfer(address to, uint256 value) public returns (bool) {
         require(to != address(0), "Cannot transfer to the zero address.");
