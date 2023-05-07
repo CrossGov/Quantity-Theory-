@@ -1,0 +1,82 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ParssonDollar {
+    string public name = "Parsson Dollar";
+    string public symbol = "PARSON";
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 21183;
+    uint256 public moneyQuantity = 21183;
+    uint256 public moneyVelocity = 1223;
+    uint256 public realValueSupply = 26137;
+    address public jensOParsson;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event MoneyQuantityChanged(uint256 oldValue, uint256 newValue);
+    event MoneyVelocityChanged(uint256 oldValue, uint256 newValue);
+    event RealValueSupplyChanged(uint256 oldValue, uint256 newValue);
+
+    constructor() {
+        jensOParsson = msg.sender;
+        totalSupply = moneyQuantity;
+        balanceOf[msg.sender] = totalSupply;
+    }
+
+    function expandMoneyQuantity(uint256 value) public {
+        require(msg.sender == jensOParsson, "Only the Jens O Parsson DAO can expand money quantity.");
+        moneyQuantity += value;
+        totalSupply += value;
+        emit MoneyQuantityChanged(moneyQuantity - value, moneyQuantity);
+    }
+
+    function contractMoneyQuantity(uint256 value) public {
+        require(msg.sender == jensOParsson, "Only the Jens O Parsson DAO can contract money quantity.");
+        moneyQuantity -= value;
+        totalSupply -= value;
+        emit MoneyQuantityChanged(moneyQuantity + value, moneyQuantity);
+    }
+
+    function setMoneyVelocity(uint256 value) public {
+        require(msg.sender == jensOParsson, "Only the Jens O Parsson DAO can change money velocity.");
+        moneyVelocity = value;
+        emit MoneyVelocityChanged(moneyVelocity - value, moneyVelocity);
+    }
+
+    function setRealValueSupply(uint256 value) public {
+        require(msg.sender == jensOParsson, "Only the Jens O Parsson DAO can change real value supply.");
+        realValueSupply = value;
+        emit RealValueSupplyChanged(realValueSupply - value, realValueSupply);
+    }
+
+    function calculatePrice() public view returns (uint256) {
+        return (moneyQuantity * moneyVelocity) / realValueSupply;
+    }
+
+    function transfer(address to, uint256 value) public returns (bool) {
+        require(balanceOf[msg.sender] >= value, "Insufficient balance.");
+        balanceOf[msg.sender] -= value;
+        balanceOf[to] += value;
+        emit Transfer(msg.sender, to, value);
+        return true;
+    }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        allowance[msg.sender][spender] = value;
+        emit Approval(msg.sender, spender, value);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        require(balanceOf[from] >= value, "Insufficient balance.");
+        require(allowance[from][msg.sender] >= value, "Insufficient allowance.");
+        balanceOf[from] -= value;
+        balanceOf[to] += value;
+        allowance[from][msg.sender] -= value;
+        emit Transfer(from, to, value);
+        return true;
+    }
+}
